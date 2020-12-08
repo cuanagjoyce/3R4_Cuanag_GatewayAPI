@@ -1,9 +1,11 @@
 <?php
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Traits\ApiResponser;
 use Illuminate\Http\Response;
+use App\Models\UserJob;
 
 
 
@@ -32,9 +34,11 @@ Class UserController extends Controller {
         $rules = [
             'username' => 'required|max:20',
             'password' => 'required|max:20',
+            'jobid' => 'required|numeric|min:1|not_in:0',
         ];
         
         $this->validate($request,$rules);
+        $userjob=UserJob::findOrFail($request->jobid);
 
         $users = User::create($request->all());
 
@@ -42,6 +46,11 @@ Class UserController extends Controller {
     }
 
     public function updateUser(Request $request, $id){
+        $rules = [
+            'jobid' => 'required|numeric|min:1|not_in:0',
+        ];
+        $this->validate($request,$rules);
+        $userjob = UserJob::findOrFail($request->jobid);
         $users = User::find($id);
 
         $this->validate($request,$this->val);
@@ -49,12 +58,15 @@ Class UserController extends Controller {
         if($request->input('password') == null){
             $users->username = $request->input('username');
             $request->input = $users->password;
+            $users->jobid= $request->jobid;
         }else if($request->input('username') == null ){
             $users->password = $request->input('password');
             $request->username = $users->username;
+            $users->jobid= $request->jobid;
         }else{
             $users->username = $request->input('username');
             $users->password = $request->input('password');
+            $users->jobid= $request->jobid;
         }
         $users->save();
 
@@ -70,7 +82,7 @@ Class UserController extends Controller {
 
     public function readUser($id){
         $users = User::find($id);
- 
+
         if(!$users == null){
             return $this->successResponse($users, Response::HTTP_FOUND);
         }else{
